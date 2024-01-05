@@ -5,12 +5,14 @@ import {
   View,
   TouchableOpacity,
 } from 'react-native';
-import DatePicker from 'react-native-datepicker';
+import DatePicker from 'react-native-date-picker';
 import PushNotification from 'react-native-push-notification';
 
+
 const CountdownApp = () => {
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [daysRemaining, setDaysRemaining] = useState(null);
+  const [notificationStatus, setNotificationStatus] = useState('');
 
   useEffect(() => {
     calculateDaysRemaining();
@@ -23,9 +25,7 @@ const CountdownApp = () => {
     }
 
     const currentDate = new Date();
-    const selectedDateObject = new Date(selectedDate);
-
-    const timeDifference = selectedDateObject.getTime() - currentDate.getTime();
+    const timeDifference = selectedDate.getTime() - currentDate.getTime();
     const days = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
 
     setDaysRemaining(days);
@@ -33,9 +33,10 @@ const CountdownApp = () => {
   };
 
   const resetCountdown = () => {
-    setSelectedDate('');
+    setSelectedDate(new Date());
     setDaysRemaining(null);
     cancelNotification();
+    setNotificationStatus('Countdown reset');
   };
 
   const scheduleNotification = (daysRemaining) => {
@@ -44,11 +45,16 @@ const CountdownApp = () => {
         message: `Only ${daysRemaining} days left until the event!`,
         date: new Date(Date.now() + daysRemaining * 24 * 60 * 60 * 1000),
       });
+
+      setNotificationStatus(`Notification scheduled for ${selectedDate}`);
+    } else {
+      setNotificationStatus('No upcoming event');
     }
   };
 
   const cancelNotification = () => {
     PushNotification.cancelAllLocalNotifications();
+    setNotificationStatus('Notification canceled');
   };
 
   return (
@@ -60,7 +66,7 @@ const CountdownApp = () => {
         mode="date"
         placeholder="Select date"
         format="YYYY-MM-DD"
-        minDate={new Date().toISOString().split('T')[0]}
+        minDate={new Date()}
         confirmBtnText="Confirm"
         cancelBtnText="Cancel"
         onDateChange={(date) => setSelectedDate(date)}
@@ -70,6 +76,7 @@ const CountdownApp = () => {
           {daysRemaining === 0 ? 'Today is the day!' : `Days remaining: ${daysRemaining}`}
         </Text>
       )}
+      <Text style={styles.notificationStatus}>{notificationStatus}</Text>
       <TouchableOpacity style={styles.button} onPress={resetCountdown}>
         <Text style={styles.buttonText}>Reset Countdown</Text>
       </TouchableOpacity>
@@ -89,7 +96,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   datePicker: {
-    width: 200,
+    width: 700,
+    height: 400,
     marginBottom: 20,
   },
   countdownText: {
@@ -104,6 +112,11 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontSize: 16,
+  },
+  notificationStatus: {
+    marginTop: 10,
+    fontSize: 14,
+    color: 'green', 
   },
 });
 
